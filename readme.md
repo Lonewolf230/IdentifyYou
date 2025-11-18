@@ -7,6 +7,9 @@ The current implementation uses the InsightFace `buffalo_l` model for detection 
 
 Image preprocessing presently consists only of resizing and format handling. EXIF orientation correction and explicit landmark-based alignment (`norm_crop`) have not yet been implemented. Images are processed sequentially on CPU, with detection and embedding extraction computed fresh for each run.
 
+
+We have added multi-threading to speed up the I/O bound operations significantly (so far tested on folder with 50-100 images)
+Multi-processing here isn't effective for smaller samples due to overhead of creating separate instances for each worker.
 ---
 
 ## Current Approach
