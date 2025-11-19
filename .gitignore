@@ -1,0 +1,9 @@
+./src/build
+./src/dist
+
+*.manifest
+*.spec
+dist/
+build/
+*.exe
+__pycache__
