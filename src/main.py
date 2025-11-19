@@ -67,33 +67,33 @@ def run_work(source_folder,
     start_time = time.time()
 
     if not os.path.isdir(source_folder):
-        logger(f"ERROR: source folder not found: {source_folder}")
+        logger(f"ERROR: source folder not found: {source_folder}", color="error")
         return {"success": False, "reason": "source_missing"}
 
     if not os.path.isdir(ref_folder):
-        logger(f"ERROR: reference folder not found: {ref_folder}")
+        logger(f"ERROR: reference folder not found: {ref_folder}", color="error")
         return {"success": False, "reason": "ref_missing"}
 
     os.makedirs(dest_folder, exist_ok=True)
-    logger(f"Verified/created destination folder: {dest_folder}")
+    logger(f"Verified/created destination folder: {dest_folder}", color="info")
 
     model_root = None
     if use_bundled_models:
         candidate = resource_path("models")
         if os.path.isdir(candidate):
             model_root = candidate
-            logger(f"Using bundled models at: {model_root}")
+            logger(f"Using bundled models at: {model_root}", color="info")
         else:
-            logger("No bundled models found; InsightFace may download models on first run.")
+            logger("No bundled models found; InsightFace may download models on first run.", color="warning")
 
-    logger("Loading model (this may take several seconds)...")
+    logger("Loading model (this may take several seconds)...", color="info")
     app = get_face_app(model_root=model_root, ctx_id=ctx_id, det_size=det_size, logger=logger)
-    logger("Model loaded.")
+    logger("Model loaded.", color="info")
 
     #load references
     ref_files = [f for f in os.listdir(ref_folder) if _is_image_file(f)]
     if not ref_files:
-        logger("ERROR: no reference images found.")
+        logger("ERROR: no reference images found.", color="error")
         return {"success": False, "reason": "no_ref_images"}
 
     ref_embeds = []
@@ -101,17 +101,17 @@ def run_work(source_folder,
         path = os.path.join(ref_folder, fname)
         img = cv2.imread(path)
         if img is None:
-            logger(f"WARNING: cannot read reference image: {path}")
+            logger(f"WARNING: cannot read reference image: {path}", color="warning")
             continue
         faces = app.get(img)
         if not faces:
-            logger(f"WARNING: no face found in reference image: {path}")
+            logger(f"WARNING: no face found in reference image: {path}", color="warning")
             continue
         ref_embeds.append(faces[0].embedding)
-        logger(f"Loaded reference: {fname}")
+        logger(f"Loaded reference: {fname}", color="info")
 
     if not ref_embeds:
-        logger("ERROR: no valid reference embeddings extracted.")
+        logger("ERROR: no valid reference embeddings extracted.", color="error")
         return {"success": False, "reason": "no_ref_embeddings"}
 
     def is_match(emb):
@@ -128,7 +128,7 @@ def run_work(source_folder,
         try:
             img = cv2.imread(img_path)
             if img is None:
-                logger(f"Failed to load: {img_path}")
+                logger(f"Failed to load: {img_path}", color="warning")
                 return None
             h, w = img.shape[:2]
             scale = 1024 / max(h, w)
@@ -136,21 +136,21 @@ def run_work(source_folder,
                 img = cv2.resize(img, (int(w * scale), int(h * scale)))
             faces = app.get(img)
             filename = os.path.basename(img_path)
-            logger(f"[{filename}] Found {len(faces)} face(s)")
+            logger(f"[{filename}] Found {len(faces)} face(s)", color="info")
             for idx, face in enumerate(faces):
                 emb = face.embedding
                 matched, score = is_match(emb)
                 logger(f"  face#{idx} cosine={score:.4f}")
                 if matched:
-                    logger(f"  MATCH: {filename}")
+                    logger(f"  MATCH: {filename}", color="success")
                     return img_path
             return None
         except Exception as e:
-            logger(f"Error processing {img_path}: {e}")
+            logger(f"Error processing {img_path}: {e}", color="error")
             return None
 
     image_paths = [os.path.join(source_folder, f) for f in os.listdir(source_folder) if _is_image_file(f)]
-    logger(f"Processing {len(image_paths)} images...")
+    logger(f"Processing {len(image_paths)} images...", color="info")
     matched_count = 0
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -162,13 +162,13 @@ def run_work(source_folder,
                     shutil.copy(res, dest_folder)
                     matched_count += 1
                 except Exception as e:
-                    logger(f"Failed to copy {res} -> {dest_folder}: {e}")
+                    logger(f"Failed to copy {res} -> {dest_folder}: {e}", color="error")
 
     elapsed = time.time() - start_time
-    logger("\n" + "="*40)
-    logger(f"Completed: {matched_count}/{len(image_paths)} matches found")
-    logger(f"Time taken: {elapsed:.2f}s")
-    logger("="*40)
+    logger("\n" + "="*40, color="info")
+    logger(f"Completed: {matched_count}/{len(image_paths)} matches found", color="info")
+    logger(f"Time taken: {elapsed:.2f}s", color="info")
+    logger("="*40, color="info")
 
     return {"success": True, "matched": matched_count, "total": len(image_paths), "time": elapsed, "dest": dest_folder}
 

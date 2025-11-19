@@ -11,12 +11,12 @@ root.geometry("900x750")
 root.configure(bg="#f4f4f4")
 
 style = ttk.Style()
-style.configure("TLabel", background="#f4f4f4", font=("Arial", 12))
-style.configure("Header.TLabel", font=("Arial", 28, "bold"), background="#f4f4f4")
-style.configure("Sub.TLabel", font=("Arial", 12), background="#f4f4f4", wraplength=800)
-style.configure("TButton", font=("Arial", 12), padding=6)
+style.configure("TLabel", background="#f4f4f4", font=("HP Simplified Jpan", 12))
+style.configure("Header.TLabel", font=("HP Simplified Jpan", 28, "bold"), background="#f4f4f4")
+style.configure("Sub.TLabel", font=("HP Simplified Jpan", 12), background="#f4f4f4", wraplength=800)
+style.configure("TButton", font=("HP Simplified Jpan", 12), padding=6)
 
-header = ttk.Label(root, text="Identify You", style="Header.TLabel")
+header = ttk.Label(root, text="Identify You", style="Header.TLabel",foreground="red")
 header.pack(pady=10)
 
 sub = ttk.Label(root, text="Select a source folder with images, a folder containing reference images, and a destination folder. The app will copy matching images to the destination.", style="Sub.TLabel")
@@ -38,7 +38,7 @@ def folder_input(label_text, variable):
     box = ttk.Frame(container)
     lbl = ttk.Label(box, text=label_text, width=25, anchor="w")
     lbl.grid(row=0, column=0, padx=5, pady=8)
-    entry = ttk.Entry(box, textvariable=variable, width=50)
+    entry = ttk.Entry(box, textvariable=variable, width=50,foreground="#1DD620")
     entry.grid(row=0, column=1, padx=5)
     btn = ttk.Button(box, text="Browse", command=lambda: choose_folder(variable))
     btn.grid(row=0, column=2, padx=5)
@@ -57,9 +57,15 @@ start_btn.pack(pady=6)
 log_box = tk.Text(root, width=100, height=20)
 log_box.pack(pady=10)
 
-def gui_log(msg):
+log_box.tag_config("success", foreground="green")
+log_box.tag_config("error", foreground="red")
+log_box.tag_config("info", foreground="blue")
+log_box.tag_config("warning", foreground="orange")
+log_box.tag_config("default", foreground="black")
+
+def gui_log(msg,color="default"):
     def append():
-        log_box.insert("end", msg + "\n")
+        log_box.insert("end", msg + "\n", color)
         log_box.see("end")
     root.after(0, append)
 
@@ -77,18 +83,17 @@ def start_process():
         dest_var.set(dest)
 
     start_btn.config(state="disabled")
-    log_box.insert("end", f"Starting: source={source} ref={ref} dest={dest}\n")
-    log_box.see("end")
+    gui_log(f"Starting: source={source} ref={ref} dest={dest}\n", color="info")
 
     def worker():
         try:
             result = run_work(source, dest, ref, log_callback=gui_log, max_workers=8)
             if result.get("success"):
-                gui_log(f"Finished: matched {result['matched']}/{result['total']}. Output: {result['dest']}")
+                gui_log(f"Finished: matched {result['matched']}/{result['total']}. Output: {result['dest']}",color="success")
             else:
-                gui_log(f"Failed: {result.get('reason', 'unknown')}")
+                gui_log(f"Failed: {result.get('reason', 'unknown')}", color="error")
         except Exception as e:
-            gui_log(f"Exception in worker: {e}")
+            gui_log(f"Exception in worker: {e}", color="error")
         finally:
             root.after(0, lambda: start_btn.config(state="normal"))
 
