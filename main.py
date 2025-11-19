@@ -5,10 +5,22 @@ import cv2
 import numpy as np
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import argparse,sys
 
-SOURCE_FOLDER = "C:\\Users\\manis\\OneDrive\\Desktop\\test_sample"
-DEST_FOLDER = "C:\\Users\\manis\\OneDrive\\Desktop\\manish-farewell-3"
-REF_IMG = "C:\\Users\\manis\\OneDrive\\Desktop\\ref"
+def parse_args():
+    parser = argparse.ArgumentParser(description="Identify You")
+    parser.add_argument("--source", type=str, help="Source folder containing images")
+    parser.add_argument("--dest", type=str, help="Destination folder for matched images")
+    parser.add_argument("--ref", type=str, help="Reference image folder")
+    return parser.parse_args()
+
+args = parse_args()
+SOURCE_FOLDER = args.source
+DEST_FOLDER = args.dest
+REF_IMG = args.ref
+# SOURCE_FOLDER="C:\\Users\\manis\\OneDrive\\Desktop\\test_sample"
+# DEST_FOLDER="C:\\Users\\manis\\OneDrive\\Desktop\\manish-farewell-3"
+# REF_IMG="C:\\Users\\manis\\OneDrive\\Desktop\\ref"
 
 os.makedirs(DEST_FOLDER, exist_ok=True)
 print("Verified/Created destination folder.")
